@@ -29,6 +29,7 @@ public class QueryStreamer<T> {
     	final StatelessSession session = factory.openStatelessSession();
     	
     	return Observable.create(new Observable.OnSubscribe<T>() {
+    		int count = 0;
 	        @Override
 	        public void call(final Subscriber<? super T> subscriber) {
 	          try {
@@ -39,12 +40,14 @@ public class QueryStreamer<T> {
 	            		  .setFetchSize(fetchSize)
 	            		  .scroll(ScrollMode.FORWARD_ONLY);
 	              while (results.next() && !subscriber.isUnsubscribed()) {
+	            	  // System.out.println("Subscriber is still subscribed");
 	            	  T obj = clazz.cast(results.get(0));
+	            	  count++;
 	            	  subscriber.onNext(obj);
 	              }
-	              if (!subscriber.isUnsubscribed()) {
-	                subscriber.onCompleted();
-	              }
+            	  System.out.println("Calling subscriber onCompleted");
+            	  subscriber.onCompleted();
+	              System.out.println("Closing the ResultSet after reading " + count + " records");
 	              results.close();
 	          }
 	          catch (Exception e) {
